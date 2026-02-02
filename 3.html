@@ -1,420 +1,679 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <title>PMS 批量排班助手</title>
-  <!-- 引入样式 -->
-  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
-  <style>
-    /* 全局重置 */
-    body { margin: 0; padding: 0; font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Microsoft YaHei", Arial, sans-serif; height: 100vh; display: flex; background: #f0f2f5; }
-    
-    /* 侧边栏模拟 (图1左侧) */
-    .sidebar { width: 220px; background-color: #001529; color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
-    .logo { height: 50px; line-height: 50px; padding-left: 20px; font-size: 18px; font-weight: bold; background: #002140; color: #1890ff; }
-    .menu-item { height: 40px; line-height: 40px; padding-left: 20px; cursor: pointer; color: #a6adb4; font-size: 14px; }
-    .menu-item:hover { color: #fff; }
-    .menu-item.active { background: #1890ff; color: #fff; }
-    .menu-group { font-size: 12px; color: #666; padding: 10px 20px; margin-top: 10px; }
-
-    /*用于内容区的容器 */
-    .main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    .header { height: 50px; background: #fff; box-shadow: 0 1px 4px rgba(0,21,41,.08); display: flex; align-items: center; justify-content: flex-end; padding: 0 20px; font-size: 12px; }
-    
-    /* 核心工作区 */
-    .work-area { flex: 1; padding: 20px; overflow-y: auto; }
-    
-    /* 白色卡片容器 */
-    .card-box { background: #fff; border-radius: 4px; box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1); padding: 20px; min-height: 600px; display: flex; flex-direction: column;}
-    .card-header { font-size: 16px; font-weight: bold; border-bottom: 1px solid #EBEEF5; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;}
-
-    /* 步骤条样式优化 */
-    .custom-steps { margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto; }
-
-    /* STEP 1 表单区域 */
-    .step1-container { width: 500px; margin: 40px auto; }
-    .info-tip { background: #f4f4f5; color: #909399; font-size: 12px; padding: 8px 15px; border-radius: 4px; margin-top: -10px; margin-bottom: 20px; border-left: 3px solid #dcdfe6; }
-
-    /* STEP 2 分组表格区域 */
-    .section-wrap { margin-bottom: 30px; border: 1px solid #ebeef5; border-radius: 4px; overflow: hidden; }
-    .section-header { padding: 12px 15px; font-weight: bold; font-size: 14px; display: flex; justify-content: space-between; align-items: center;}
-    .section-header.rest { background-color: #fef0f0; color: #F56C6C; border-bottom: 1px solid #fde2e2; }
-    .section-header.duty { background-color: #f0f9eb; color: #67C23A; border-bottom: 1px solid #e1f3d8; }
-    
-    .section-desc { font-weight: normal; font-size: 12px; color: #999; margin-left: 10px; }
-
-    /* 批量操作工具栏 (灰色虚线背景) */
-    .batch-toolbar { padding: 15px; background: #fcfcfc; border-bottom: 1px dashed #ebeef5; display: flex; align-items: center; gap: 10px; }
-    .toolbar-label { font-size: 13px; font-weight: bold; color: #606266; }
-
-    /* 错误提示文字 (模拟图2右侧红字) */
-    .error-tag { color: #F56C6C; font-size: 12px; display: flex; align-items: center; margin-top: 4px; }
-    .error-tag i { margin-right: 4px; }
-    
-    .footer-btns { margin-top: auto; padding-top: 20px; border-top: 1px solid #ebeef5; text-align: right; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>供应商会话拉黑</title>
+    <style>
+        :root {
+            --primary-color: #1890ff;
+            --warning-color: #faad14;
+            --danger-color: #ff4d4f;
+            --success-color: #52c41a;
+            --border-color: #e8e8e8;
+            --bg-color: #f0f2f5;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .breadcrumb {
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        .breadcrumb b {
+            color: #333;
+        }
+        .layout-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .search-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .input-control {
+            padding: 6px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 250px;
+            transition: all 0.3s;
+        }
+        .input-control:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+        .btn {
+            padding: 6px 16px;
+            border: 1px solid #d9d9d9;
+            background: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .btn:hover { color: var(--primary-color); border-color: var(--primary-color); }
+        .btn-primary {
+            background: var(--primary-color);
+            color: #fff;
+            border: none;
+        }
+        .btn-primary:hover { background: #40a9ff; color: #fff; }
+        .btn-danger {
+            background: #fff;
+            color: var(--danger-color);
+            border-color: #ffccc7;
+        }
+        .btn-danger:hover {
+            background: #fff1f0;
+            border-color: var(--danger-color);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            table-layout: fixed;
+        }
+        th {
+            background: #fafafa;
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 500;
+            color: #555;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: #333;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        tr:hover td { background: #fdfdfd; }
+        .reason-text {
+            color: #666;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .tag-blacklist {
+            background: #fff1f0;
+            border: 1px solid #ffa39e;
+            color: #cf1322;
+            padding: 2px 8px;
+            border-radius: 2px;
+            font-size: 12px;
+        }
+        .tag-whitelist {
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+            padding: 2px 8px;
+            border-radius: 2px;
+            font-size: 12px;
+        }
+        .intercept-count {
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            text-decoration: underline;
+            text-decoration-color: #ccc;
+        }
+        .intercept-count:hover {
+            color: var(--primary-color);
+            text-decoration-color: var(--primary-color);
+        }
+        .type-tag {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 2px;
+            font-size: 11px;
+            margin-right: 4px;
+            border: 1px solid transparent;
+        }
+        .type-sourcing { background: #e6f7ff; border-color: #91d5ff; color: #1890ff; }
+        .type-check { background: #f6ffed; border-color: #b7eb8f; color: #52c41a; }
+        .type-notify { background: #fff7e6; border-color: #ffd591; color: #fa8c16; }
+        .type-order { background: #fff1f0; border-color: #ffa39e; color: #cf1322; font-weight: bold; }
+        .action-link {
+            color: var(--primary-color);
+            cursor: pointer;
+            margin-right: 12px;
+            user-select: none;
+        }
+        .action-link.delete { color: var(--danger-color); }
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal {
+            background: #fff;
+            width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 9px 28px rgba(0,0,0,0.05);
+            animation: fadeIn 0.2s ease;
+            max-width: 90vw;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-body { padding: 24px; }
+        .modal-footer {
+            padding: 12px 24px;
+            border-top: 1px solid var(--border-color);
+            text-align: right;
+            background: #fbfbfb;
+            border-radius: 0 0 8px 8px;
+        }
+        .form-item { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: 500; }
+        .form-input-full { width: 100%; box-sizing: border-box; }
+        textarea.form-input-full { height: 80px; resize: vertical; }
+        .checkbox-group {
+            display: flex;
+            gap: 16px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .checkbox-label input[type="checkbox"] {
+            margin: 0;
+        }
+        .search-results {
+            border: 1px solid #d9d9d9;
+            border-top: none;
+            max-height: 150px;
+            overflow-y: auto;
+            position: absolute;
+            width: calc(100% - 2px);
+            background: #fff;
+            z-index: 10;
+            border-radius: 0 0 4px 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            display: none;
+        }
+        .search-result-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .search-result-item:hover { background: #e6f7ff; }
+        .multi-select {
+            position: relative;
+            min-width: 120px;
+            display: inline-block;
+        }
+        .select-trigger {
+            padding: 6px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+            background: #fff;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+        .select-trigger:hover { border-color: var(--primary-color); }
+        .select-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 100%;
+            white-space: nowrap;
+            background: #fff;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 100;
+            margin-top: 4px;
+            padding: 4px 0;
+            display: none;
+        }
+        .select-options label {
+            display: block;
+            padding: 5px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .select-options label:hover { background: #f5f5f5; }
+        .select-options input[type="checkbox"] { margin: 0; }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        @media (max-width: 1200px) {
+            .input-control { width: 200px; }
+        }
+        @media (max-width: 992px) {
+            .input-control { width: 160px; }
+        }
+    </style>
 </head>
 <body>
-
-<div id="app" style="display: flex; width: 100%;">
-  
-  <!-- 左侧菜单 (视觉背景) -->
-  <div class="sidebar">
-    <div class="logo">PMS System</div>
-    <div class="menu-group">搜索菜单</div>
-    <div class="menu-item"><i class="el-icon-search"></i> 找货模块</div>
-    <div class="menu-group">采购配置</div>
-    <div class="menu-item"><i class="el-icon-s-operation"></i> 缺货通知</div>
-    <div class="menu-item"><i class="el-icon-setting"></i> 找货配置</div>
-    <div class="menu-item"><i class="el-icon-document"></i> 采购明细</div>
-    <div class="menu-item active"><i class="el-icon-date"></i> 采购分配</div>
-    <div class="menu-item"><i class="el-icon-suitcase"></i> 工作安排</div>
-  </div>
-
-  <!-- 主内容区 -->
-  <div class="main-container">
-    <div class="header">
-      <span><i class="el-icon-user"></i> 王林芳 (管理员)</span>
-    </div>
-
-    <div class="work-area">
-      <div class="card-box">
-        <!-- 标题 -->
-        <div class="card-header">
-          <span><i class="el-icon-date"></i> 批量排班助手</span>
-        </div>
-
-        <!-- 步骤条 -->
-        <el-steps :active="currentStep" finish-status="success" simple class="custom-steps">
-          <el-step title="选择范围" icon="el-icon-user"></el-step>
-          <el-step title="配置明细" icon="el-icon-edit-outline"></el-step>
-        </el-steps>
-
-        <!-- Step 1: 范围选择 -->
-        <div v-show="currentStep === 1">
-          <el-form class="step1-container" label-width="100px" size="medium">
-            <el-form-item label="采购员">
-              <el-select v-model="formStep1.users" multiple placeholder="请选择人员" style="width: 100%;">
-                <el-option label="王小虎" value="1"></el-option>
-                <el-option label="李小狼" value="2"></el-option>
-                <el-option label="木之本樱" value="3"></el-option>
-                <el-option label="大道寺知世" value="4"></el-option>
-              </el-select>
-            </el-form-item>
-
-            <el-form-item label="日期范围">
-              <el-date-picker
-                v-model="formStep1.dateRange"
-                type="daterange"
-                range-separator="至"
-                start-placeholder="开始日期"
-                end-placeholder="结束日期"
-                value-format="yyyy-MM-dd"
-                style="width: 100%;">
-              </el-date-picker>
-            </el-form-item>
-
-            <el-form-item label="值班状态">
-              <el-radio-group v-model="formStep1.defaultType">
-                <el-radio label="rest">休息</el-radio>
-                <el-radio label="duty">值班</el-radio>
-              </el-radio-group>
-            </el-form-item>
-
-            <!-- 模拟截图中的灰色提示条 -->
-            <div class="info-tip" style="margin-left: 100px;" v-if="formStep1.users.length && formStep1.dateRange">
-              <i class="el-icon-info"></i> 预计将生成 
-              <b>{{ formStep1.users.length }}</b> 人 × 
-              <b>{{ dayCount }}</b> 天 = 
-              <b>{{ formStep1.users.length * dayCount }}</b> 条 排班记录。
-            </div>
-          </el-form>
-        </div>
-
-        <!-- Step 2: 详细配置 -->
-        <div v-show="currentStep === 2">
-          
-          <!-- 模块一：休息 > 任务转出 (红色系) -->
-          <div class="section-wrap" style="border-top: 2px solid #F56C6C;">
-            <div class="section-header rest">
-              <span><i class="el-icon-plane"></i> 休息 > 任务转出 <span class="section-desc">我请假休息，需指定原接管人处理我的任务</span></span>
-            </div>
-            
-            <!-- 批量操作栏 -->
-            <div class="batch-toolbar">
-              <span class="toolbar-label">批量操作：</span>
-              <el-select v-model="batchRest.manager" placeholder="统一设接管人" size="small" style="width: 180px;">
-                 <el-option label="李小狼" value="2"></el-option>
-                 <el-option label="木之本樱" value="3"></el-option>
-              </el-select>
-              <el-select v-model="batchRest.tasks" multiple collapse-tags placeholder="统一设转出任务" size="small" style="width: 220px;">
-                 <el-option label="全部任务" value="all"></el-option>
-                 <el-option label="找货任务" value="sku"></el-option>
-                 <el-option label="询价任务" value="inquiry"></el-option>
-              </el-select>
-              <el-button type="primary" plain size="small" icon="el-icon-magic-stick" @click="applyBatchRest">一键复用</el-button>
-              <span style="flex:1; text-align:right; font-size:12px; color:#909399;">选中 {{ selectionRest.length }} 行</span>
-            </div>
-
-            <el-table :data="restList" border size="small" @selection-change="handleRestSelect">
-              <el-table-column type="selection" width="50"></el-table-column>
-              <el-table-column label="日期" width="180" prop="date">
-                 <template slot-scope="scope">
-                    {{ scope.row.date }} <span style="font-size:12px;color:#999;">(周{{ getWeek(scope.row.date) }})</span>
-                 </template>
-              </el-table-column>
-              <el-table-column label="被接管人 (休息者)" width="150" prop="userName">
-                 <template slot-scope="scope">
-                    <strong>{{ scope.row.userName }}</strong>
-                 </template>
-              </el-table-column>
-              <el-table-column label="接管人" min-width="180">
-                 <template slot-scope="scope">
-                    <el-select v-model="scope.row.manager" placeholder="选择同事" size="small" style="width: 100%">
-                       <el-option label="李小狼" value="2"></el-option>
-                       <el-option label="木之本樱" value="3"></el-option>
-                       <el-option label="大道寺知世" value="4"></el-option>
-                    </el-select>
-                 </template>
-              </el-table-column>
-              <el-table-column label="接管任务" min-width="220">
-                 <template slot-scope="scope">
-                    <el-select v-model="scope.row.tasks" multiple collapse-tags placeholder="选择任务" size="small" style="width: 100%">
-                       <el-option label="全部任务" value="all"></el-option>
-                       <el-option label="找货任务" value="sku"></el-option>
-                    </el-select>
-                 </template>
-              </el-table-column>
-              <el-table-column label="操作" width="80" align="center">
-                 <template slot-scope="scope">
-                    <el-button type="text" icon="el-icon-delete" style="color:#F56C6C;" @click="removeRow(restList, scope.$index)"></el-button>
-                 </template>
-              </el-table-column>
-            </el-table>
-            <div v-if="restList.length === 0" style="padding: 20px; text-align:Center; color:#909399; font-size:13px;">暂无数据</div>
-          </div>
-
-
-          <!-- 模块二：值班 > 接管任务 (绿色系) -->
-          <div class="section-wrap" style="border-top: 2px solid #67C23A;">
-            <div class="section-header duty">
-              <span><i class="el-icon-user-solid"></i> 值班 > 接管任务 <span class="section-desc">我正常在岗，去接管其他同事的任务</span></span>
-            </div>
-
-            <!-- 批量操作栏 -->
-            <div class="batch-toolbar">
-              <span class="toolbar-label">批量操作：</span>
-              <el-select v-model="batchDuty.target" placeholder="统一设被接管人" size="small" style="width: 180px;">
-                 <el-option label="木之本樱" value="3"></el-option>
-                 <el-option label="大道寺知世" value="4"></el-option>
-              </el-select>
-              <el-select v-model="batchDuty.tasks" multiple collapse-tags placeholder="统一设接管任务" size="small" style="width: 220px;">
-                 <el-option label="全部任务" value="all"></el-option>
-                 <el-option label="询价任务" value="inquiry"></el-option>
-              </el-select>
-              <el-button type="primary" plain size="small" icon="el-icon-magic-stick" @click="applyBatchDuty">一键复用</el-button>
-              <span style="flex:1; text-align:right; font-size:12px; color:#909399;">选中 {{ selectionDuty.length }} 行</span>
-            </div>
-
-            <el-table :data="dutyList" border size="small" @selection-change="handleDutySelect">
-              <el-table-column type="selection" width="50"></el-table-column>
-              <el-table-column label="日期" width="180" prop="date">
-                 <template slot-scope="scope">
-                    {{ scope.row.date }} <span style="font-size:12px;color:#999;">(周{{ getWeek(scope.row.date) }})</span>
-                 </template>
-              </el-table-column>
-              <el-table-column label="接管人 (值班者)" width="150" prop="userName">
-                 <template slot-scope="scope">
-                    <strong>{{ scope.row.userName }}</strong>
-                 </template>
-              </el-table-column>
-              <el-table-column label="被接管人" min-width="180">
-                 <template slot-scope="scope">
-                    <el-select v-model="scope.row.target" placeholder="选择同事" size="small" style="width: 100%">
-                       <el-option label="木之本樱" value="3"></el-option>
-                       <el-option label="大道寺知世" value="4"></el-option>
-                    </el-select>
-                 </template>
-              </el-table-column>
-              <el-table-column label="接管任务" min-width="220">
-                 <template slot-scope="scope">
-                    <el-select v-model="scope.row.tasks" multiple collapse-tags placeholder="选择任务" size="small" style="width: 100%">
-                       <el-option label="全部任务" value="all"></el-option>
-                       <el-option label="询价任务" value="inquiry"></el-option>
-                    </el-select>
-                 </template>
-              </el-table-column>
-              <el-table-column label="操作" width="120" align="center">
-                 <template slot-scope="scope">
-                    <el-button type="text" icon="el-icon-delete" style="color:#F56C6C;" @click="removeRow(dutyList, scope.$index)"></el-button>
-                    <!-- 模拟截图中的红字错误提示 -->
-                    <div v-if="scope.row.hasError" class="error-tag">
-                      <i class="el-icon-warning-outline"></i> 任务已存在
+    <div class="breadcrumb">采购配置 / <b>供应商风控中心</b></div>
+    <div class="layout-container">
+        <div class="action-bar">
+            <div class="search-group">
+                <select id="filterStatus" class="input-control" style="width: 110px;">
+                    <option value="all" selected>状态: 全部</option>
+                    <option value="active">已拉黑</option>
+                    <option value="inactive">已恢复</option>
+                </select>
+                <div class="multi-select" id="typeMultiSelect">
+                    <div class="select-trigger" id="typeSelectTrigger">
+                        <span id="typeSelectLabel">类型: 全部</span>
+                        <small>▼</small>
                     </div>
-                 </template>
-              </el-table-column>
-            </el-table>
-            <div v-if="dutyList.length === 0" style="padding: 20px; text-align:Center; color:#909399; font-size:13px;">暂无数据</div>
-          </div>
-
+                    <div class="select-options" id="typeSelectOptions">
+                        <label><input type="checkbox" value="找货" checked class="type-checkbox"> 找货</label>
+                        <label><input type="checkbox" value="查单" checked class="type-checkbox"> 查单</label>
+                        <label><input type="checkbox" value="通知" checked class="type-checkbox"> 通知</label>
+                    </div>
+                </div>
+                <input type="text" class="input-control" placeholder="搜索旺旺号/公司名/ID" id="searchInput">
+                <button class="btn btn-primary" id="searchBtn">搜索</button>
+                <button class="btn" id="resetBtn">重置</button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <span style="font-size: 13px; color: #666;">
+                    刷新时间: <span id="refreshTimeDisplay">--</span>
+                    <i style="cursor: pointer; margin-left: 4px;" id="refreshIcon" title="刷新列表">↻</i>
+                </span>
+                <button class="btn btn-danger" id="addBlacklistBtn">+ 新增拉黑供应商</button>
+            </div>
         </div>
-
-        <!-- 底部按钮 -->
-        <div class="footer-btns">
-           <el-button @click="prevStep" v-if="currentStep === 2">上一步</el-button>
-           <el-button @click="close">取 消</el-button>
-           <el-button type="primary" @click="nextStep" v-if="currentStep === 1">下一步</el-button>
-           <el-button type="primary" @click="submit" v-if="currentStep === 2">确 定</el-button>
+        <table>
+            <thead>
+                <tr>
+                    <th width="120">供应商ID</th>
+                    <th width="150">供应商旺旺号</th>
+                    <th width="200">供应商公司名称</th>
+                    <th width="150">拉黑类型</th>
+                    <th width="80">本月拦截</th>
+                    <th>拉黑原因</th>
+                    <th width="160" id="sortTimeTh" title="点击切换按时间排序">
+                        时间信息 <span id="sortTimeIcon">↓</span>
+                    </th>
+                    <th width="80">操作人</th>
+                    <th width="80">状态</th>
+                    <th width="100">操作</th>
+                </tr>
+            </thead>
+            <tbody id="blacklistBody"><!-- JS渲染 --></tbody>
+        </table>
+        <div id="emptyState" class="empty-state" style="display: none;">暂无拉黑数据</div>
+        <div style="margin-top: 20px; text-align: center; color: #999; font-size: 13px;">
+            当前仅展示问询拉黑的供应商列表，如需查看禁止下单的供应商列表，请前往“供应商管理”列表查看
         </div>
-
-      </div>
     </div>
-  </div>
-</div>
 
-<script src="https://unpkg.com/vue@2/dist/vue.js"></script>
-<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <div class="modal-header">
+                新增拉黑供应商
+                <span style="cursor:pointer;color:#999" id="modalCloseBtn">✕</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-item" style="position: relative;">
+                    <label class="form-label">供应商旺旺号 <span style="color:red">*</span></label>
+                    <input type="text" class="input-control form-input-full" id="supplierSearch" placeholder="输入旺旺号或公司名搜索...">
+                    <div class="search-results" id="searchResults"><!-- 搜索结果 --></div>
+                </div>
+                <div class="form-item">
+                    <label class="form-label">供应商公司名称</label>
+                    <input type="text" class="input-control form-input-full" id="companyNameInput" placeholder="请输入公司名称（选填）">
+                </div>
+                <div class="form-item">
+                    <label class="form-label">拉黑类型 <span style="color:red">*</span></label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label"><input type="checkbox" name="blockType" value="找货" checked> 找货</label>
+                        <label class="checkbox-label"><input type="checkbox" name="blockType" value="查单" checked> 查单</label>
+                        <label class="checkbox-label"><input type="checkbox" name="blockType" value="通知" checked> 通知</label>
+                    </div>
+                    <div style="font-size: 12px; color: #999; margin-top: 6px;">注：勾选相应类型，系统将屏蔽对应场景的任务。</div>
+                </div>
+                <div class="form-item">
+                    <label class="form-label">拉黑原因 <span style="color:red">*</span></label>
+                    <textarea class="input-control form-input-full" id="blockReason" placeholder="例如：发货极慢，经常缺货，态度恶劣等..."></textarea>
+                    <div style="font-size: 12px; color: #ff4d4f; margin-top: 4px;">⚠️ 拉黑后，系统将不再对此供应商生成任何自动问询任务！</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="modalCancelBtn">取消</button>
+                <button class="btn btn-primary" id="modalSaveBtn">确认拉黑</button>
+            </div>
+        </div>
+    </div>
 
-<script>
-  const USERS = { '1': '王小虎', '2': '李小狼', '3': '木之本樱', '4': '大道寺知世' };
+    <script>
+        // 模拟数据
+        let blacklistData = [
+            { recordId: 'rec_0', id: 'SUP_9999', wangwang: 'bad_seller_007', companyName: '诚信缺失贸易行', types: ['下单', '找货', '查单', '通知'], interceptCount: 0, reason: '涉嫌售假，平台已通报', time: '2025-01-20 16:00:00', operator: '风控系统', status: 'active' },
+            { recordId: 'rec_1', id: 'SUP_1001', wangwang: 'tb_shop_1001', companyName: '义乌市小商品精选店', types: ['找货', '查单'], interceptCount: 42, reason: '多次发错货，且拒绝承担运费', time: '2025-09-01 10:22:11', operator: '张三', status: 'active' },
+            { recordId: 'rec_2', id: 'SUP_2001', wangwang: 'hz_silk_direct', companyName: '杭州丝绸直供', types: ['查单'], interceptCount: 5, reason: '配合度低，多次拒绝提供物流信息', time: '2024-12-11 09:30:00', operator: '李四', status: 'inactive', releaseTime: '2025-01-01 09:00:00' },
+            { recordId: 'rec_3', id: 'SUP_2002', wangwang: 'sh_stationary_fac', companyName: '上海文具用品制造厂', types: ['找货'], interceptCount: 1, reason: '临时缺货，且未提前通知，影响订单交付', time: '2024-11-20 14:00:00', operator: '王五', status: 'inactive', releaseTime: '2024-11-25 10:00:00' }
+        ];
+        const supplierDb = [
+            { id: 'SUP_1001', wangwang: 'tb_shop_1001', companyName: '义乌市小商品精选店' },
+            { id: 'SUP_1002', wangwang: 'gz_clothing_wh', companyName: '广州服装批发总仓' },
+            { id: 'SUP_1003', wangwang: 'sz_elec_factory', companyName: '深圳电子元件厂' },
+            { id: 'SUP_2001', wangwang: 'hz_silk_direct', companyName: '杭州丝绸直供' },
+            { id: 'SUP_2002', wangwang: 'sh_stationary_fac', companyName: '上海文具用品制造厂' },
+            { id: 'SUP_9999', wangwang: 'bad_seller_007', companyName: '诚信缺失贸易行' }
+        ];
 
-  new Vue({
-    el: '#app',
-    data() {
-      return {
-        currentStep: 1,
-        // 第一步表单
-        formStep1: {
-          users: ['1', '2'], 
-          dateRange: ['2025-12-25', '2025-12-26'],
-          defaultType: 'duty' 
-        },
-        
-        // 两个列表数据
-        restList: [],
-        dutyList: [],
-        
-        // 选中项
-        selectionRest: [],
-        selectionDuty: [],
+        // 全局变量
+        let selectedSupplier = null;
+        let currentSortOrder = 'desc';
+        const dom = {
+            filterStatus: document.getElementById('filterStatus'),
+            typeSelectTrigger: document.getElementById('typeSelectTrigger'),
+            typeSelectOptions: document.getElementById('typeSelectOptions'),
+            typeSelectLabel: document.getElementById('typeSelectLabel'),
+            typeCheckboxes: document.querySelectorAll('.type-checkbox'),
+            searchInput: document.getElementById('searchInput'),
+            searchBtn: document.getElementById('searchBtn'),
+            resetBtn: document.getElementById('resetBtn'),
+            refreshIcon: document.getElementById('refreshIcon'),
+            refreshTimeDisplay: document.getElementById('refreshTimeDisplay'),
+            addBlacklistBtn: document.getElementById('addBlacklistBtn'),
+            sortTimeTh: document.getElementById('sortTimeTh'),
+            sortTimeIcon: document.getElementById('sortTimeIcon'),
+            blacklistBody: document.getElementById('blacklistBody'),
+            emptyState: document.getElementById('emptyState'),
+            addModal: document.getElementById('addModal'),
+            modalCloseBtn: document.getElementById('modalCloseBtn'),
+            modalCancelBtn: document.getElementById('modalCancelBtn'),
+            modalSaveBtn: document.getElementById('modalSaveBtn'),
+            supplierSearch: document.getElementById('supplierSearch'),
+            companyNameInput: document.getElementById('companyNameInput'),
+            blockReason: document.getElementById('blockReason'),
+            searchResults: document.getElementById('searchResults'),
+            blockTypeCheckboxes: document.querySelectorAll('input[name="blockType"]')
+        };
 
-        // 批量操作模型
-        batchRest: { manager: '', tasks: [] },
-        batchDuty: { target: '', tasks: [] }
-      }
-    },
-    computed: {
-      dayCount() {
-        if (!this.formStep1.dateRange) return 0;
-        const start = new Date(this.formStep1.dateRange[0]);
-        const end = new Date(this.formStep1.dateRange[1]);
-        return Math.floor((end - start) / (1000 * 3600 * 24)) + 1;
-      }
-    },
-    methods: {
-      // 核心：生成数据
-      nextStep() {
-        if (!this.formStep1.users.length || !this.formStep1.dateRange) {
-           this.$message.warning("请完善选择");
-           return;
+        // 初始化：绑定所有事件（彻底抛弃HTML内onclick）
+        function init() {
+            // 筛选/搜索事件
+            dom.filterStatus.addEventListener('change', renderTable);
+            dom.typeSelectTrigger.addEventListener('click', toggleTypeSelect);
+            dom.typeCheckboxes.forEach(cb => cb.addEventListener('change', () => { updateTypeLabel(); renderTable(); }));
+            dom.searchBtn.addEventListener('click', renderTable);
+            dom.resetBtn.addEventListener('click', resetSearch);
+            dom.refreshIcon.addEventListener('click', refreshList);
+            dom.sortTimeTh.addEventListener('click', toggleSort);
+            // 弹窗事件
+            dom.addBlacklistBtn.addEventListener('click', addBlacklist);
+            dom.modalCloseBtn.addEventListener('click', closeModal);
+            dom.modalCancelBtn.addEventListener('click', closeModal);
+            dom.modalSaveBtn.addEventListener('click', saveBlacklist);
+            dom.supplierSearch.addEventListener('input', (e) => simulateSearch(e.target.value));
+            // 页面空白处关闭下拉
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#typeMultiSelect')) dom.typeSelectOptions.style.display = 'none';
+                if (!e.target.closest('#supplierSearch') && !e.target.closest('#searchResults')) dom.searchResults.style.display = 'none';
+            });
+            // 初始化渲染
+            updateRefreshTime();
+            renderTable();
         }
 
-        this.restList = [];
-        this.dutyList = [];
-        
-        const [startStr, endStr] = this.formStep1.dateRange;
-        const dates = this.getDates(startStr, endStr);
-
-        this.formStep1.users.forEach(uid => {
-          dates.forEach(date => {
-             const baseRow = {
-               date: date,
-               userId: uid,
-               userName: USERS[uid],
-               tasks: []
-             };
-
-             // 模拟：给"王小虎(1)"在"25号"制造一个错误冲突，并强制为值班
-             if(uid === '1' && date === '2025-12-25') {
-                 this.dutyList.push({ ...baseRow, target: '2', hasError: true }); // 模拟红字
-             } 
-             // 模拟：给"李小狼(2)"默认为休息
-             else if (uid === '2') {
-                 this.restList.push({ ...baseRow, manager: '' });
-             } 
-             // 其他按默认类型
-             else {
-               if (this.formStep1.defaultType === 'rest') {
-                 this.restList.push({ ...baseRow, manager: '' });
-               } else {
-                 this.dutyList.push({ ...baseRow, target: '' });
-               }
-             }
-          });
-        });
-
-        this.currentStep = 2;
-      },
-      prevStep() {
-        this.currentStep = 1;
-      },
-      close() {
-        this.$message('关闭弹窗');
-      },
-      submit() {
-        this.$confirm('确定保存当前排班设置吗？', '提示', { type: 'warning' }).then(() => {
-           this.$message.success('保存成功');
-           console.log('Rest:', this.restList);
-           console.log('Duty:', this.dutyList);
-        });
-      },
-
-      // 批量：休息
-      applyBatchRest() {
-        if (!this.selectionRest.length) return this.$message.warning("请先勾选下方行");
-        this.selectionRest.forEach(row => {
-          if(this.batchRest.manager) row.manager = this.batchRest.manager;
-          if(this.batchRest.tasks.length) row.tasks = [...this.batchRest.tasks];
-        });
-        this.$message.success(`已应用到 ${this.selectionRest.length} 行`);
-      },
-
-      // 批量：值班
-      applyBatchDuty() {
-        if (!this.selectionDuty.length) return this.$message.warning("请先勾选下方行");
-        this.selectionDuty.forEach(row => {
-          if(this.batchDuty.target) row.target = this.batchDuty.target;
-          if(this.batchDuty.tasks.length) row.tasks = [...this.batchDuty.tasks];
-        });
-        this.$message.success(`已应用到 ${this.selectionDuty.length} 行`);
-      },
-
-      handleRestSelect(val) { this.selectionRest = val; },
-      handleDutySelect(val) { this.selectionDuty = val; },
-
-      removeRow(list, index) {
-        list.splice(index, 1);
-      },
-
-      // 工具：日期
-      getDates(start, end) {
-        let arr = [];
-        let dt = new Date(start);
-        let endDt = new Date(end);
-        while(dt <= endDt) {
-           let m = (dt.getMonth()+1).toString().padStart(2,'0');
-           let d = dt.getDate().toString().padStart(2,'0');
-           arr.push(`${dt.getFullYear()}-${m}-${d}`);
-           dt.setDate(dt.getDate()+1);
+        // 核心：解除拉黑函数（100%触发）
+        function releaseBlacklist(recordId) {
+            console.log('触发解除拉黑：', recordId); // 控制台日志，可验证触发
+            const targetItem = blacklistData.find(item => item.recordId === recordId);
+            if (!targetItem) {
+                alert('⚠️ 未找到该供应商记录！');
+                return;
+            }
+            if (confirm('⚠️ 确认解除该供应商的黑名单吗？\n解除后将恢复正常问询功能！')) {
+                targetItem.status = 'inactive';
+                targetItem.releaseTime = new Date().toLocaleString().replace(/\//g, '-');
+                renderTable();
+                const filterVal = dom.filterStatus.value;
+                if (filterVal === 'active') {
+                    setTimeout(() => {
+                        alert('✅ 解除成功！\n该记录已移至「已恢复」列表，可切换筛选查看。');
+                    }, 100);
+                } else {
+                    alert('✅ 解除成功！该供应商已恢复正常状态。');
+                }
+            }
         }
-        return arr;
-      },
-      getWeek(dateStr) {
-        const weeks = ['日','一','二','三','四','五','六'];
-        return weeks[new Date(dateStr).getDay()];
-      }
-    }
-  })
-</script>
+
+        // 重新拉黑函数
+        function reBlockSupplier(recordId) {
+            const item = blacklistData.find(i => i.recordId === recordId);
+            if (!item) return;
+            addBlacklist();
+            dom.supplierSearch.value = item.wangwang;
+            dom.companyNameInput.value = item.companyName || '';
+            dom.blockReason.value = item.reason;
+            dom.blockTypeCheckboxes.forEach(cb => {
+                cb.checked = item.types.includes(cb.value);
+            });
+            selectedSupplier = { id: item.id, wangwang: item.wangwang, companyName: item.companyName };
+        }
+
+        // 渲染表格（操作按钮用自定义属性+事件委托）
+        function renderTable() {
+            const searchVal = dom.searchInput.value.trim().toLowerCase();
+            const filterStatus = dom.filterStatus.value;
+            const selectedTypes = Array.from(dom.typeCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+            dom.blacklistBody.innerHTML = '';
+
+            // 过滤数据
+            let filtered = blacklistData.filter(item => {
+                const matchText = item.id.toLowerCase().includes(searchVal) || item.wangwang.toLowerCase().includes(searchVal) || (item.companyName && item.companyName.toLowerCase().includes(searchVal));
+                const matchStatus = filterStatus === 'all' || item.status === filterStatus;
+                const matchType = selectedTypes.length === 0 ? false : item.types.some(t => selectedTypes.includes(t));
+                return matchText && matchStatus && matchType;
+            });
+
+            // 排序
+            filtered.sort((a, b) => {
+                const getTime = (item) => new Date((item.status !== 'active' && item.releaseTime ? item.releaseTime : item.time).replace(/-/g, '/')).getTime();
+                return currentSortOrder === 'asc' ? getTime(a) - getTime(b) : getTime(b) - getTime(a);
+            });
+
+            // 空状态
+            if (filtered.length === 0) {
+                dom.emptyState.style.display = 'block';
+                return;
+            }
+            dom.emptyState.style.display = 'none';
+
+            // 渲染行
+            filtered.forEach(item => {
+                let typesHtml = '';
+                item.types.includes('找货') && (typesHtml += '<span class="type-tag type-sourcing">找货</span>');
+                item.types.includes('查单') && (typesHtml += '<span class="type-tag type-check">查单</span>');
+                item.types.includes('通知') && (typesHtml += '<span class="type-tag type-notify">通知</span>');
+                item.types.includes('下单') && (typesHtml += '<span class="type-tag type-order">禁止下单</span>');
+                const countHtml = item.interceptCount > 0 ? `<span class="intercept-count" data-name="${item.wangwang}">${item.interceptCount} 单</span>` : '<span style="color:#ccc">0</span>';
+                const isActive = item.status === 'active';
+                const statusHtml = isActive ? '<span class="tag-blacklist">已拉黑</span>' : '<span class="tag-whitelist">已恢复</span>';
+                const timeHtml = isActive ? `<div style="color:#666;font-size:12px">拉黑: ${item.time.split(' ')[0]}</div>` : `<div style="color:#52c41a;font-size:12px;font-weight:500">恢复: ${item.releaseTime.split(' ')[0]}</div><div style="color:#999;font-size:12px">拉黑: ${item.time.split(' ')[0]}</div>`;
+                // 操作按钮：自定义data属性存recordId，无直接传参
+                const actionHtml = isActive 
+                    ? `<span class="action-link delete operate-btn" data-type="release" data-id="${item.recordId}">解除拉黑</span>` 
+                    : `<span class="action-link operate-btn" data-type="reblock" data-id="${item.recordId}">重新拉黑</span>`;
+
+                const tr = document.createElement('tr');
+                !isActive && (tr.style.background = '#fafafa');
+                tr.innerHTML = `
+                    <td>${item.id}</td>
+                    <td><b>${item.wangwang}</b></td>
+                    <td>${item.companyName || '-'}</td>
+                    <td>${typesHtml || '-'}</td>
+                    <td>${countHtml}</td>
+                    <td><div class="reason-text" title="${item.reason}">${item.reason}</div></td>
+                    <td>${timeHtml}</td>
+                    <td>${item.operator}</td>
+                    <td>${statusHtml}</td>
+                    <td>${actionHtml}</td>
+                `;
+                dom.blacklistBody.appendChild(tr);
+            });
+
+            // 表格操作按钮：事件委托（核心！解决所有触发问题）
+            dom.blacklistBody.addEventListener('click', (e) => {
+                const target = e.target.closest('.operate-btn');
+                const interceptTarget = e.target.closest('.intercept-count');
+                if (target) {
+                    const type = target.dataset.type;
+                    const id = target.dataset.id;
+                    type === 'release' ? releaseBlacklist(id) : reBlockSupplier(id);
+                }
+                if (interceptTarget) {
+                    showInterceptDetails(interceptTarget.dataset.name);
+                }
+            });
+        }
+
+        // 其他工具函数（均为原生JS，无兼容问题）
+        function toggleTypeSelect() {
+            dom.typeSelectOptions.style.display = dom.typeSelectOptions.style.display === 'block' ? 'none' : 'block';
+        }
+        function updateTypeLabel() {
+            const checked = Array.from(dom.typeCheckboxes).filter(cb => cb.checked);
+            dom.typeSelectLabel.innerText = checked.length === 3 ? '类型: 全部' : checked.length === 0 ? '类型: 无' : `类型: 已选(${checked.length})`;
+        }
+        function updateRefreshTime() {
+            const now = new Date();
+            const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,0)}-${String(now.getDate()).padStart(2,0)} ${String(now.getHours()).padStart(2,0)}:${String(now.getMinutes()).padStart(2,0)}:${String(now.getSeconds()).padStart(2,0)}`;
+            dom.refreshTimeDisplay.innerText = timeStr;
+        }
+        function refreshList() {
+            updateRefreshTime();
+            renderTable();
+            alert('✅ 列表已刷新');
+        }
+        function toggleSort() {
+            currentSortOrder = currentSortOrder === 'desc' ? 'asc' : 'desc';
+            dom.sortTimeIcon.innerText = currentSortOrder === 'desc' ? '↓' : '↑';
+            renderTable();
+        }
+        function resetSearch() {
+            dom.searchInput.value = '';
+            dom.filterStatus.value = 'all';
+            dom.typeCheckboxes.forEach(cb => cb.checked = true);
+            updateTypeLabel();
+            renderTable();
+        }
+        function addBlacklist() {
+            dom.addModal.style.display = 'flex';
+            dom.supplierSearch.value = '';
+            dom.companyNameInput.value = '';
+            dom.blockReason.value = '';
+            dom.searchResults.style.display = 'none';
+            dom.blockTypeCheckboxes.forEach(cb => cb.checked = true);
+            selectedSupplier = null;
+        }
+        function closeModal() {
+            dom.addModal.style.display = 'none';
+        }
+        function simulateSearch(val) {
+            if (!val) {
+                dom.searchResults.style.display = 'none';
+                return;
+            }
+            const results = supplierDb.filter(s => (s.wangwang.includes(val) || s.companyName.includes(val)) && !blacklistData.find(b => b.id === s.id && b.status === 'active'));
+            dom.searchResults.innerHTML = results.length > 0 ? results.map(s => `<div class="search-result-item" data-id="${s.id}" data-wangwang="${s.wangwang}" data-company="${s.companyName}"><span style="font-weight:bold">${s.wangwang}</span> <span style="color:#666;font-size:12px">(${s.companyName})</span></div>`).join('') : '<div style="padding:8px;color:#999">未找到匹配供应商或已拉黑</div>';
+            dom.searchResults.style.display = 'block';
+            // 搜索结果点击
+            dom.searchResults.addEventListener('click', (e) => {
+                const item = e.target.closest('.search-result-item');
+                if (item) {
+                    selectedSupplier = {
+                        id: item.dataset.id,
+                        wangwang: item.dataset.wangwang,
+                        companyName: item.dataset.company
+                    };
+                    dom.supplierSearch.value = selectedSupplier.wangwang;
+                    dom.companyNameInput.value = selectedSupplier.companyName;
+                    dom.searchResults.style.display = 'none';
+                }
+            });
+        }
+        function saveBlacklist() {
+            const reason = dom.blockReason.value.trim();
+            const searchInput = dom.supplierSearch.value.trim();
+            const selectedTypes = Array.from(dom.blockTypeCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+            if (!selectedSupplier && !searchInput) { alert('请填写/搜索旺旺号！'); return; }
+            if (selectedTypes.length === 0) { alert('请选择拉黑类型！'); return; }
+            if (!reason) { alert('请填写拉黑原因！'); return; }
+            const newItem = {
+                recordId: 'rec_' + Date.now(),
+                id: selectedSupplier ? selectedSupplier.id : ('SUP_NEW_' + Math.floor(Math.random()*10000)),
+                wangwang: selectedSupplier ? selectedSupplier.wangwang : searchInput,
+                companyName: selectedSupplier ? selectedSupplier.companyName : dom.companyNameInput.value.trim() || '-',
+                types: selectedTypes,
+                interceptCount: 0,
+                reason: reason,
+                time: new Date().toLocaleString().replace(/\//g, '-'),
+                operator: '当前用户',
+                status: 'active'
+            };
+            blacklistData.unshift(newItem);
+            renderTable();
+            closeModal();
+            alert(`✅ 拉黑成功！\n供应商：${newItem.wangwang}\n类型：${selectedTypes.join('、')}`);
+        }
+        function showInterceptDetails(name) {
+            alert(`【拦截明细】\n供应商：${name}\n（功能开发中，暂未实现）`);
+        }
+
+        // 启动页面
+        window.onload = init;
+    </script>
 </body>
 </html>
